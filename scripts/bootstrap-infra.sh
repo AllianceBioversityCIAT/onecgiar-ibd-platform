@@ -42,6 +42,10 @@ aws cloudformation deploy \
   --template-file "${TEMPLATE_FILE}" \
   --stack-name "${STACK_NAME}" \
   --capabilities CAPABILITY_NAMED_IAM \
+  --tags \
+    "Project=${PROJECT_NAME}-${ENVIRONMENT}" \
+    "Environment=${ENVIRONMENT}" \
+    "ManagedBy=CloudFormation" \
   --parameter-overrides \
     "ProjectName=${PROJECT_NAME}" \
     "Environment=${ENVIRONMENT}" \
@@ -66,6 +70,10 @@ aws cloudformation deploy \
   --template-file "${TEMPLATE_FILE}" \
   --stack-name "${STACK_NAME}" \
   --capabilities CAPABILITY_NAMED_IAM \
+  --tags \
+    "Project=${PROJECT_NAME}-${ENVIRONMENT}" \
+    "Environment=${ENVIRONMENT}" \
+    "ManagedBy=CloudFormation" \
   --parameter-overrides \
     "ProjectName=${PROJECT_NAME}" \
     "Environment=${ENVIRONMENT}" \

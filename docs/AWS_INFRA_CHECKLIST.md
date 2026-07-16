@@ -46,6 +46,18 @@ The script deploys `infrastructure/cloudformation.yaml` in two phases:
 | Lambda Function URL | (output `LambdaFunctionUrl`) | `AuthType: NONE` (public) |
 | CloudFront | (output `CloudFrontDistributionId`) | Origin = Function URL; SSR cache disabled |
 
+### Resource tags (applied to all taggable resources)
+
+| Key | Value (default) |
+| --- | --- |
+| `Project` | `onecgiar-ibd-platform-dev` (`${ProjectName}-${Environment}`) — used for cost allocation |
+| `Environment` | `dev` / `staging` / `prod` |
+| `Name` | Resource-specific name |
+| `ManagedBy` | `CloudFormation` |
+
+Also applied as **stack-level tags** by `bootstrap-infra.sh` (`--tags`).  
+Note: `AWS::Lambda::Url` and `AWS::Lambda::Permission` do not support resource tags in CloudFormation.
+
 ## After bootstrap — copy outputs into CI
 
 From stack outputs (or the script summary):
