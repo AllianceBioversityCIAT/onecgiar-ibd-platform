@@ -1,0 +1,70 @@
+---
+// This page is server-rendered on every request (SSR), not prerendered.
+// Proof: renderedAt is computed on the server for each request — refresh and it changes.
+export const prerender = false;
+
+const renderedAt = new Date().toISOString();
+const runtime = `Node ${process.version}`;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>IBD Platform — SSR test</title>
+    <meta name="description" content="Landing de la unidad IBD (Alliance Bioversity-CIAT). Prueba de despliegue SSR con Astro." />
+    <style>
+      :root { color-scheme: light dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: radial-gradient(1200px 600px at 50% -10%, #1a3a2e, #0b1512);
+        color: #eaf2ee;
+      }
+      main { text-align: center; padding: 2rem; max-width: 640px; }
+      .badge {
+        display: inline-block;
+        font-size: .8rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        padding: .35rem .8rem;
+        border: 1px solid #4caf7d55;
+        border-radius: 999px;
+        color: #7fe0ab;
+        background: #0f2a1f;
+      }
+      h1 { font-size: clamp(2rem, 6vw, 3.5rem); margin: 1.2rem 0 .4rem; }
+      p.lead { color: #a9c4b7; margin: 0 0 2rem; }
+      .card {
+        margin-top: 1.5rem;
+        padding: 1.2rem 1.4rem;
+        border: 1px solid #ffffff1a;
+        border-radius: 14px;
+        background: #ffffff08;
+        font-size: .95rem;
+        line-height: 1.7;
+      }
+      .card b { color: #7fe0ab; }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <span class="badge">IBD · Alliance Bioversity-CIAT</span>
+      <h1>Landing IBD</h1>
+      <p class="lead">Esqueleto inicial — prueba de despliegue SSR con Astro.</p>
+
+      <div class="card">
+        Renderizado en el <b>servidor</b> en cada request.<br />
+        Hora del servidor: <code>{renderedAt}</code><br />
+        Runtime: <code>{runtime}</code><br />
+        <small>Refresca la página → la hora cambia = <b>SSR</b>, no prerender.</small>
+      </div>
+    </main>
+  </body>
+</html>
