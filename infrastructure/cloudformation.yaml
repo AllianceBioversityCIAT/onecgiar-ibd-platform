@@ -1,0 +1,256 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  OneCGIAR IBD Platform — ECR repository, Lambda (container image),
+  Lambda Function URL, and CloudFront distribution with the Function URL as origin.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: onecgiar-ibd-platform
+    Description: Base name used for ECR repo and Lambda function.
+
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+    Description: Environment label (appended to resource names).
+
+  SecretName:
+    Type: String
+    Description: >
+      Existing Secrets Manager secret name (or ARN). Create the secret yourself;
+      this stack only grants Lambda GetSecretValue and sets SECRET_NAME on the function.
+
+  ImageUri:
+    Type: String
+    Default: ''
+    Description: >
+      Full container image URI (account.dkr.ecr.region.amazonaws.com/repo:tag).
+      Required when DeployApp=true. Use scripts/bootstrap-infra.sh to push the first image.
+
+  DeployApp:
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    Description: >
+      false = create ECR only (bootstrap phase).
+      true  = create Lambda + Function URL + CloudFront (requires ImageUri).
+
+  MemorySize:
+    Type: Number
+    Default: 1024
+    MinValue: 512
+    MaxValue: 10240
+    Description: Lambda memory (MB).
+
+  Timeout:
+    Type: Number
+    Default: 30
+    MinValue: 10
+    MaxValue: 120
+    Description: Lambda timeout (seconds).
+
+Conditions:
+  ShouldDeployApp: !Equals [!Ref DeployApp, 'true']
+
+Resources:
+  EcrRepository:
+    Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      RepositoryName: !Sub '${ProjectName}-${Environment}'
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      ImageTagMutability: MUTABLE
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Keep last 20 images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 20
+                },
+                "action": { "type": "expire" }
+              }
+            ]
+          }
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Condition: ShouldDeployApp
+    Properties:
+      RoleName: !Sub '${ProjectName}-${Environment}-lambda-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: SecretsManagerRead
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Sub
+                  - 'arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${SecretId}*'
+                  - SecretId: !Ref SecretName
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Condition: ShouldDeployApp
+    Properties:
+      FunctionName: !Sub '${ProjectName}-${Environment}'
+      PackageType: Image
+      Code:
+        ImageUri: !Ref ImageUri
+      Role: !GetAtt LambdaExecutionRole.Arn
+      MemorySize: !Ref MemorySize
+      Timeout: !Ref Timeout
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          SECRET_NAME: !Ref SecretName
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+  FunctionUrl:
+    Type: AWS::Lambda::Url
+    Condition: ShouldDeployApp
+    Properties:
+      AuthType: NONE
+      TargetFunctionArn: !GetAtt LambdaFunction.Arn
+      InvokeMode: BUFFERED
+
+  FunctionUrlPublicAccess:
+    Type: AWS::Lambda::Permission
+    Condition: ShouldDeployApp
+    Properties:
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref LambdaFunction
+      Principal: '*'
+      FunctionUrlAuthType: NONE
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Condition: ShouldDeployApp
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: !Sub '${ProjectName}-${Environment} (Lambda Function URL origin)'
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        PriceClass: PriceClass_100
+        DefaultRootObject: ''
+        Origins:
+          - Id: LambdaFunctionUrlOrigin
+            DomainName: !Select
+              - 2
+              - !Split
+                - '/'
+                - !GetAtt FunctionUrl.FunctionUrl
+            CustomOriginConfig:
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+        DefaultCacheBehavior:
+          TargetOriginId: LambdaFunctionUrlOrigin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+            - PUT
+            - PATCH
+            - POST
+            - DELETE
+          CachedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          Compress: true
+          # Managed-CachingDisabled — SSR responses must not be cached by default
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+          # Managed-AllViewerExceptHostHeader — forward cookies/query/headers to Lambda
+          OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+
+Outputs:
+  EcrRepositoryName:
+    Description: ECR repository name (use as ECR_REPO / LAMBDA_FUNCTION_NAME base)
+    Value: !Ref EcrRepository
+    Export:
+      Name: !Sub '${AWS::StackName}-EcrRepositoryName'
+
+  EcrRepositoryUri:
+    Description: ECR repository URI without tag (account.dkr.ecr.region.amazonaws.com/repo)
+    Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${EcrRepository}'
+    Export:
+      Name: !Sub '${AWS::StackName}-EcrRepositoryUri'
+
+  EcrRegistry:
+    Description: ECR registry host (use as ECR_REGISTRY in Jenkins)
+    Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com'
+    Export:
+      Name: !Sub '${AWS::StackName}-EcrRegistry'
+
+  LambdaFunctionName:
+    Condition: ShouldDeployApp
+    Description: Lambda function name
+    Value: !Ref LambdaFunction
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaFunctionName'
+
+  LambdaFunctionUrl:
+    Condition: ShouldDeployApp
+    Description: Lambda Function URL (direct origin URL)
+    Value: !GetAtt FunctionUrl.FunctionUrl
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaFunctionUrl'
+
+  CloudFrontDistributionId:
+    Condition: ShouldDeployApp
+    Description: CloudFront distribution ID (use for invalidation in deploy)
+    Value: !Ref CloudFrontDistribution
+    Export:
+      Name: !Sub '${AWS::StackName}-CloudFrontDistributionId'
+
+  CloudFrontDomainName:
+    Condition: ShouldDeployApp
+    Description: CloudFront domain name (public site hostname)
+    Value: !GetAtt CloudFrontDistribution.DomainName
+    Export:
+      Name: !Sub '${AWS::StackName}-CloudFrontDomainName'
+
+  SuggestedResourceName:
+    Description: Canonical name used for ECR repo and Lambda when DeployApp=true
+    Value: !Sub '${ProjectName}-${Environment}'
