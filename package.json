@@ -18,11 +18,11 @@
   "dependencies": {
     "@astrojs/node": "^11.0.2",
     "@aws-sdk/client-secrets-manager": "^3.787.0",
-    "astro": "^7.0.9",
-    "onecgiar-ibd-platform": "file:"
+    "astro": "^7.0.9"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
+    "@types/node": "^22.20.1",
     "@vitest/coverage-v8": "^3.1.1",
     "typescript": "^5.8.2",
     "vitest": "^3.1.1"
