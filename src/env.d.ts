@@ -1,4 +1,5 @@
 /// <reference types="astro/client" />
+/// <reference types="node" />
 
 interface ImportMetaEnv {
   readonly SECRET_NAME?: string;
