@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One-time / bootstrap infrastructure for OneCGIAR IBD Platform.
+# One-time / manual bootstrap (optional — Jenkins deploy-ecr.sh handles first run).
 #
 # Phase 1: Create ECR repository via CloudFormation (DeployApp=false).
 # Phase 2: Build & push a bootstrap image.
@@ -32,26 +32,50 @@ STACK_NAME="${STACK_NAME:-${PROJECT_NAME}-${ENVIRONMENT}}"
 AWS_REGION="${AWS_REGION:-us-east-1}"
 IMAGE_TAG="${IMAGE_TAG:-bootstrap}"
 SECRET_NAME="${SECRET_NAME:?SECRET_NAME is required (create the secret in Secrets Manager first)}"
+LAMBDA_FUNCTION_NAME="${LAMBDA_FUNCTION_NAME:-${PROJECT_NAME}-${ENVIRONMENT}}"
 TEMPLATE_FILE="${TEMPLATE_FILE:-infrastructure/cloudformation.yaml}"
 
 RESOURCE_NAME="${PROJECT_NAME}-${ENVIRONMENT}"
 
-echo "==> Phase 1: Deploy ECR-only stack (${STACK_NAME})"
-aws cloudformation deploy \
-  --region "${AWS_REGION}" \
-  --template-file "${TEMPLATE_FILE}" \
-  --stack-name "${STACK_NAME}" \
-  --capabilities CAPABILITY_NAMED_IAM \
-  --tags \
-    "Project=${PROJECT_NAME}-${ENVIRONMENT}" \
-    "Environment=${ENVIRONMENT}" \
-    "ManagedBy=CloudFormation" \
-  --parameter-overrides \
-    "ProjectName=${PROJECT_NAME}" \
-    "Environment=${ENVIRONMENT}" \
-    "SecretName=${SECRET_NAME}" \
-    "DeployApp=false" \
-    "ImageUri="
+stack_exists() {
+  aws cloudformation describe-stacks \
+    --region "${AWS_REGION}" \
+    --stack-name "${STACK_NAME}" \
+    >/dev/null 2>&1
+}
+
+lambda_exists() {
+  aws lambda get-function \
+    --region "${AWS_REGION}" \
+    --function-name "${LAMBDA_FUNCTION_NAME}" \
+    >/dev/null 2>&1
+}
+
+if lambda_exists; then
+  echo "Lambda ${LAMBDA_FUNCTION_NAME} already exists. Use scripts/deploy-ecr.sh instead."
+  exit 0
+fi
+
+if ! stack_exists; then
+  echo "==> Phase 1: Deploy ECR-only stack (${STACK_NAME})"
+  aws cloudformation deploy \
+    --region "${AWS_REGION}" \
+    --template-file "${TEMPLATE_FILE}" \
+    --stack-name "${STACK_NAME}" \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --tags \
+      "Project=${PROJECT_NAME}-${ENVIRONMENT}" \
+      "Environment=${ENVIRONMENT}" \
+      "ManagedBy=CloudFormation" \
+    --parameter-overrides \
+      "ProjectName=${PROJECT_NAME}" \
+      "Environment=${ENVIRONMENT}" \
+      "SecretName=${SECRET_NAME}" \
+      "DeployApp=false" \
+      "ImageUri="
+else
+  echo "==> Phase 1: Stack ${STACK_NAME} already exists — skipping ECR-only deploy"
+fi
 
 ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output text)"
 ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
@@ -90,10 +114,8 @@ aws cloudformation describe-stacks \
 
 echo
 echo "Bootstrap complete."
-echo "Copy these into Jenkinsfile / CI env:"
 echo "  ECR_REGISTRY=${ECR_REGISTRY}"
 echo "  ECR_REPO=${RESOURCE_NAME}"
 echo "  LAMBDA_FUNCTION_NAME=${RESOURCE_NAME}"
 echo "  CFN_STACK_NAME=${STACK_NAME}"
-echo "  CLOUDFRONT_DISTRIBUTION_ID=<CloudFrontDistributionId from outputs above>"
 echo "  SECRET_NAME=${SECRET_NAME}"

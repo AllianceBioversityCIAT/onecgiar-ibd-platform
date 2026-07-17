@@ -73,9 +73,15 @@ From stack outputs (or the script summary):
 
 ## Ongoing deploys
 
-1. Test → Build → set Lambda `SECRET_NAME` → `scripts/deploy-ecr.sh`
-2. Image tag = CI build number (or chosen tag)
-3. CloudFront invalidation `/*` after Lambda update
+Jenkins runs everything end-to-end (no manual bootstrap required):
+
+1. Test → Build → **Deploy** (`scripts/deploy-ecr.sh`)
+   - First run: creates ECR (if needed), pushes image, creates Lambda + Function URL + CloudFront
+   - Later runs: pushes image, updates Lambda, invalidates CloudFront
+2. Configure Lambda `SECRET_NAME` (idempotent; CFN also sets it on first create)
+3. Image tag = CI build number
+
+Manual bootstrap (`scripts/bootstrap-infra.sh`) is optional — same result as the first Jenkins deploy.
 
 ## Not used in this project
 
