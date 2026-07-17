@@ -1,0 +1,3 @@
+# Pull requests that change any file require approval from this team
+# before merging to protected branches (enable "Require review from Code Owners").
+* @AllianceBioversityCIAT/pull-request-reviewers
