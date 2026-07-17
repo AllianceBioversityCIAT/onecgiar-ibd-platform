@@ -1,6 +1,6 @@
 # AWS infrastructure checklist — OneCGIAR IBD Platform (DEV)
 
-This checklist covers what you create manually vs what CloudFormation creates.
+This checklist covers what you create manually vs what CloudFormation creates..
 
 ## You create manually (before bootstrap)
 
