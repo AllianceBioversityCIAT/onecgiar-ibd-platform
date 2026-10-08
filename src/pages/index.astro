@@ -5,6 +5,7 @@
  * cajas sobre la banda → máquina → tarjetas a los dispositivos. Bucle exacto, sin video.
  */
 export const prerender = true;
+import AiReviewSection from "../components/AiReviewSection.astro";
 ---
 <!doctype html>
 <html lang="en">
@@ -121,6 +122,7 @@ export const prerender = true;
     <li><em>03 · PLATFORMS</em><b>It reaches where it is used</b><span>PRMS, CLARISA and MARLO, on any screen.</span></li>
   </ol>
 </section>
+<AiReviewSection />
 <script is:inline>
 (() => {
   const scene = document.getElementById('scene'), view = document.getElementById('view');
