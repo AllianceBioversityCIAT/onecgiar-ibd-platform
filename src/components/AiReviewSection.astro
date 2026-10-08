@@ -1,0 +1,266 @@
+---
+/**
+ * §02 — M&E software + AI. Interactive demo of an AI review over a sample result.
+ *
+ * Grounded in real IBD work (team notes 2026-08-04): PRMS "AI Review" (AI-Powered
+ * Validation Module for PRMS field quality) and the AI-Driven Evidence Quality
+ * Assessment module — both still in development, so they are labelled that way.
+ * The demo runs fully in the browser with prepared responses (no model, no cost)
+ * and the sample result is fictional — both stated on the page.
+ */
+const fields = [
+  {
+    key: "title",
+    label: "Result title",
+    before: "Farmer training",
+    note: "Too generic. Say who was reached, with what, and where.",
+    after: "340 women farmers trained in drip irrigation in Kenya",
+  },
+  {
+    key: "desc",
+    label: "Description",
+    before: "We did trainings in several places with good results.",
+    note: "No measurable change. Add numbers and what changed for people.",
+    after: "Five sessions in Machakos County reached 340 women farmers; 72% adopted drip irrigation within six months.",
+  },
+  {
+    key: "evidence",
+    label: "Evidence",
+    before: "",
+    note: "No evidence attached. Link a report or a dataset.",
+    after: "Training report (PDF) · Attendance dataset",
+  },
+];
+---
+
+<section class="ai" id="ai-review" aria-labelledby="ai-title">
+  <div class="wrap">
+    <div class="copy" data-reveal>
+      <h2 id="ai-title">Monitoring &amp; evaluation software, with an AI reviewer built in.</h2>
+      <p class="lead">
+        We build and run the platforms CGIAR uses to monitor and evaluate its research. Now we are adding AI
+        that reviews each result before it is submitted, so reports arrive clearer and better evidenced.
+      </p>
+
+      <ul class="caps">
+        <li data-reveal style="--i:1">
+          <span class="ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7" /><path d="m15 17 2 2 4-4" /></svg>
+          </span>
+          <div><b>AI Review of result fields</b><span>Flags vague or incomplete fields in PRMS and suggests a clearer version.</span></div>
+          <em>In development</em>
+        </li>
+        <li data-reveal style="--i:2">
+          <span class="ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5" /><path d="m10 15 2 2 3-4" /></svg>
+          </span>
+          <div><b>Evidence quality assessment</b><span>Checks that each result is backed by evidence that supports it.</span></div>
+          <em>In development</em>
+        </li>
+      </ul>
+    </div>
+
+    <div class="demo" data-reveal style="--i:1" data-state="idle">
+      <div class="bar">
+        <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="tab">Sample result · PRMS</span>
+        <div class="score" aria-live="polite">
+          <svg viewBox="0 0 44 44" aria-hidden="true"><circle class="trk" cx="22" cy="22" r="18" /><circle class="val" cx="22" cy="22" r="18" /></svg>
+          <span class="num">–</span>
+          <span class="lbl">Quality</span>
+        </div>
+      </div>
+
+      <div class="fields">
+        {
+          fields.map((f, i) => (
+            <div class="field" data-key={f.key} style={`--i:${i}`}>
+              <label>{f.label}</label>
+              <div class="input" data-before={f.before} data-after={f.after}>
+                <span class="txt">{f.before || <span class="ph">Nothing attached</span>}</span>
+              </div>
+              <p class="note" role="note">
+                <span class="flag" aria-hidden="true">!</span>
+                <span class="ok" aria-hidden="true">✓</span>
+                <span class="msg">{f.note}</span>
+              </p>
+            </div>
+          ))
+        }
+      </div>
+
+      <div class="actions">
+        <button type="button" class="run">
+          <span class="spark" aria-hidden="true"></span><span class="t">Run AI review</span>
+        </button>
+        <span class="hint">Illustrative demo · fictional data · prepared responses</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .ai{position:relative;padding:clamp(72px,12vh,140px) 16px;background:var(--bg);overflow:hidden}
+  .ai::before{content:"";position:absolute;inset:auto -10% -40% -10%;height:70%;
+    background:radial-gradient(closest-side,rgba(31,122,77,.10),transparent);pointer-events:none}
+  .wrap{position:relative;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1.05fr;gap:clamp(32px,5vw,72px);align-items:center}
+
+  h2{font-size:clamp(30px,3.4vw,48px);line-height:1.05;letter-spacing:-.03em;font-weight:800;margin:0 0 16px}
+  .lead{font-size:clamp(16px,1.2vw,18px);line-height:1.6;color:var(--muted);margin:0 0 28px;max-width:540px}
+
+  .caps{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+  .caps li{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:start;background:#fff;border-radius:18px;padding:16px 18px;
+    box-shadow:0 1px 0 rgba(13,42,31,.06),0 10px 24px rgba(13,42,31,.06);transition:transform .35s cubic-bezier(.2,.9,.25,1.3),box-shadow .35s}
+  .caps li:hover{transform:translateY(-3px);box-shadow:0 1px 0 rgba(13,42,31,.06),0 18px 34px rgba(13,42,31,.12)}
+  .caps .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:#e6f2ea;color:var(--green);transition:transform .35s}
+  .caps li:hover .ic{transform:rotate(-6deg) scale(1.06)}
+  .caps svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .caps b{display:block;font-size:16px;margin-bottom:3px}
+  .caps div span{color:var(--muted);font-size:14.5px;line-height:1.45}
+  .caps em{font-style:italic;font-size:13px;color:#8b9488;white-space:nowrap}
+
+  /* ---- Demo window ---- */
+  .demo{background:#fff;border-radius:24px;box-shadow:0 1px 0 rgba(13,42,31,.08),0 30px 60px rgba(13,42,31,.14);overflow:hidden;position:relative}
+  .bar{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #eef0ea;background:#fbfbf8}
+  .dots{display:flex;gap:6px}.dots i{width:10px;height:10px;border-radius:50%;background:#e2e5dd}
+  .tab{font:600 13px Inter;color:var(--muted)}
+  .score{margin-left:auto;display:flex;align-items:center;gap:8px;position:relative}
+  .score svg{width:44px;height:44px;transform:rotate(-90deg)}
+  .score circle{fill:none;stroke-width:4}
+  .score .trk{stroke:#eef0ea}
+  .score .val{stroke:#d9a21b;stroke-linecap:round;stroke-dasharray:113.1;stroke-dashoffset:113.1;transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1),stroke .5s}
+  .score .num{position:absolute;left:0;width:44px;text-align:center;font:800 13px Inter;color:var(--ink)}
+  .score .lbl{font:600 12px Inter;color:var(--muted)}
+  .demo[data-state="done"] .score .val{stroke:var(--green)}
+
+  .fields{padding:22px 22px 6px;display:grid;gap:16px}
+  .field label{display:block;font:600 12px Inter;letter-spacing:.04em;color:var(--muted);margin-bottom:6px}
+  .input{position:relative;border:1.5px solid #e4e7df;border-radius:12px;padding:12px 14px;font-size:15px;line-height:1.45;min-height:46px;
+    transition:border-color .4s,background .4s,box-shadow .4s;overflow:hidden}
+  .ph{color:#a3ab9f;font-style:italic}
+  /* Scan sweep while the AI "reads" each field */
+  .input::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 20%,rgba(120,200,150,.35) 50%,transparent 80%);
+    transform:translateX(-110%);pointer-events:none}
+  .field.scan .input::after{animation:sweep .9s ease-in-out}
+  .field.flagged .input{border-color:#e7c35a;background:#fffbef}
+  .field.fixed .input{border-color:#7fc49a;background:#f3faf5;box-shadow:0 0 0 4px rgba(31,122,77,.08)}
+
+  .note{display:flex;gap:8px;align-items:flex-start;margin:0;font-size:13.5px;line-height:1.4;color:#7a5c0c;
+    max-height:0;opacity:0;transform:translateY(-4px);transition:max-height .45s,opacity .35s,transform .35s,margin .35s,color .3s}
+  .field.flagged .note,.field.fixed .note{max-height:60px;opacity:1;transform:none;margin-top:8px}
+  .note .flag,.note .ok{flex:none;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font:800 11px Inter;color:#fff}
+  .note .flag{background:#d9a21b}.note .ok{display:none;background:var(--green)}
+  .field.fixed .note{color:var(--green)}
+  .field.fixed .note .flag{display:none}.field.fixed .note .ok{display:grid}
+  .caret{display:inline-block;width:2px;height:1.1em;background:var(--green);vertical-align:-2px;margin-left:1px;animation:blink .8s steps(1) infinite}
+
+  .actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 22px 22px}
+  .run{display:inline-flex;align-items:center;gap:10px;font:700 15px Inter;color:#fff;background:var(--ink);border:0;border-radius:999px;padding:13px 20px;cursor:pointer;
+    position:relative;overflow:hidden;transition:transform .25s cubic-bezier(.2,.9,.25,1.4),box-shadow .3s,background .3s}
+  .run:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 24px rgba(13,42,31,.25)}
+  .run:active:not(:disabled){transform:translateY(0) scale(.98)}
+  .run:disabled{cursor:progress;background:#2c4a3d}
+  .run::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%);transform:translateX(-120%)}
+  .run:hover:not(:disabled)::after,.run:disabled::after{animation:sweep 1.2s ease-in-out infinite}
+  .hint{font-size:12.5px;color:#8b9488}
+
+  /* AI spark: 4-point star that twinkles */
+  .spark{width:14px;height:14px;flex:none;background:currentColor;
+    clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);animation:twinkle 2.4s ease-in-out infinite}
+  .run .spark{color:#9fe0b6}
+
+  /* Scroll reveal */
+  [data-reveal]{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1);transition-delay:calc(var(--i,0) * .12s)}
+  [data-reveal].in{opacity:1;transform:none}
+  .caps li[data-reveal].in{transition:opacity .8s,transform .35s cubic-bezier(.2,.9,.25,1.3),box-shadow .35s;transition-delay:calc(var(--i,0) * .12s),0s,0s}
+
+  @keyframes sweep{from{transform:translateX(-110%)}to{transform:translateX(110%)}}
+  @keyframes blink{50%{opacity:0}}
+  @keyframes twinkle{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(.7) rotate(45deg)}}
+
+  @media (max-width:900px){.wrap{grid-template-columns:1fr}}
+  @media (max-width:520px){.caps li{grid-template-columns:auto 1fr}.caps em{grid-column:2;justify-self:start}}
+  @media (prefers-reduced-motion:reduce){
+    [data-reveal]{opacity:1;transform:none;transition:none}
+    .spark,.caret,.run::after,.field.scan .input::after{animation:none}
+  }
+</style>
+
+<script>
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const wait = (ms: number) => new Promise((r) => setTimeout(r, reduce ? 0 : ms));
+
+  // Scroll reveal
+  const io = new IntersectionObserver(
+    (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }),
+    { threshold: 0.2 },
+  );
+  document.querySelectorAll(".ai [data-reveal]").forEach((el) => io.observe(el));
+
+  const demo = document.querySelector<HTMLElement>(".ai .demo")!;
+  const btn = demo.querySelector<HTMLButtonElement>(".run")!;
+  const label = btn.querySelector<HTMLElement>(".t")!;
+  const ring = demo.querySelector<SVGCircleElement>(".score .val")!;
+  const num = demo.querySelector<HTMLElement>(".score .num")!;
+  const fields = [...demo.querySelectorAll<HTMLElement>(".field")];
+  const C = 113.1;
+
+  function setScore(to: number) {
+    ring.style.strokeDashoffset = String(C * (1 - to / 100));
+    const from = Number(num.dataset.v || 0), t0 = performance.now(), dur = reduce ? 0 : 900;
+    num.dataset.v = String(to);
+    const step = (now: number) => {
+      const k = dur ? Math.min(1, (now - t0) / dur) : 1;
+      num.textContent = String(Math.round(from + (to - from) * k));
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  async function type(el: HTMLElement, text: string) {
+    el.textContent = "";
+    const caret = document.createElement("span"); caret.className = "caret";
+    const node = document.createTextNode(""); el.append(node, caret);
+    for (const ch of text) { node.data += ch; await wait(14); }
+    caret.remove();
+  }
+
+  function reset() {
+    fields.forEach((f) => {
+      f.classList.remove("scan", "flagged", "fixed");
+      const txt = f.querySelector<HTMLElement>(".txt")!, before = f.querySelector<HTMLElement>(".input")!.dataset.before || "";
+      txt.innerHTML = before ? "" : '<span class="ph">Nothing attached</span>';
+      if (before) txt.textContent = before;
+    });
+    num.dataset.v = "0"; num.textContent = "–"; ring.style.strokeDashoffset = String(C);
+  }
+
+  // One action at a time: the button is locked synchronously until the step finishes (no double runs).
+  btn.addEventListener("click", async () => {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    const state = demo.dataset.state;
+    if (state === "idle") {
+      label.textContent = "Reviewing…";
+      for (const f of fields) { f.classList.add("scan"); await wait(450); f.classList.remove("scan"); f.classList.add("flagged"); await wait(150); }
+      setScore(38); await wait(400);
+      demo.dataset.state = "reviewed"; label.textContent = "Apply suggestions";
+    } else if (state === "reviewed") {
+      label.textContent = "Rewriting…";
+      for (const f of fields) {
+        const after = f.querySelector<HTMLElement>(".input")!.dataset.after || "";
+        await type(f.querySelector<HTMLElement>(".txt")!, after);
+        f.classList.replace("flagged", "fixed");
+        f.querySelector<HTMLElement>(".msg")!.textContent = "Looks good.";
+        await wait(200);
+      }
+      setScore(92); await wait(500);
+      demo.dataset.state = "done"; label.textContent = "Replay demo";
+    } else {
+      fields.forEach((f, i) => { f.querySelector<HTMLElement>(".msg")!.textContent = NOTES[i]; });
+      reset(); demo.dataset.state = "idle"; label.textContent = "Run AI review";
+    }
+    btn.disabled = false;
+  });
+  const NOTES = fields.map((f) => f.querySelector<HTMLElement>(".msg")!.textContent || "");
+</script>
