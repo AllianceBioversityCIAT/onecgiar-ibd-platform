@@ -1,70 +1,216 @@
 ---
-// This page is server-rendered on every request (SSR), not prerendered.
-// Proof: renderedAt is computed on the server for each request — refresh and it changes.
-export const prerender = false;
-
-const renderedAt = new Date().toISOString();
-const runtime = `Node ${process.version}`;
+/**
+ * HOME — hero animado "del campo a la plataforma" (punto de partida desde cero, 2026-10-07).
+ * Escena fija (public/hero/fondo.webp) + piezas animadas en código (requestAnimationFrame):
+ * cajas sobre la banda → máquina → tarjetas a los dispositivos. Bucle exacto, sin video.
+ */
+export const prerender = true;
+import AiReviewSection from "../components/AiReviewSection.astro";
 ---
-
 <!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>IBD Platform — SSR test</title>
-    <meta name="description" content="Landing de la unidad IBD (Alliance Bioversity-CIAT). Prueba de despliegue SSR con Astro." />
-    <style>
-      :root { color-scheme: light dark; }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        min-height: 100dvh;
-        display: grid;
-        place-items: center;
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-        background: radial-gradient(1200px 600px at 50% -10%, #1a3a2e, #0b1512);
-        color: #eaf2ee;
-      }
-      main { text-align: center; padding: 2rem; max-width: 640px; }
-      .badge {
-        display: inline-block;
-        font-size: .8rem;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-        padding: .35rem .8rem;
-        border: 1px solid #4caf7d55;
-        border-radius: 999px;
-        color: #7fe0ab;
-        background: #0f2a1f;
-      }
-      h1 { font-size: clamp(2rem, 6vw, 3.5rem); margin: 1.2rem 0 .4rem; }
-      p.lead { color: #a9c4b7; margin: 0 0 2rem; }
-      .card {
-        margin-top: 1.5rem;
-        padding: 1.2rem 1.4rem;
-        border: 1px solid #ffffff1a;
-        border-radius: 14px;
-        background: #ffffff08;
-        font-size: .95rem;
-        line-height: 1.7;
-      }
-      .card b { color: #7fe0ab; }
-      code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-    </style>
-  </head>
-  <body>
-    <main>
-      <span class="badge">IBD · Alliance Bioversity-CIAT</span>
-      <h1>Landing IBD</h1>
-      <p class="lead">Esqueleto inicial — prueba de despliegue SSR con Astro.</p>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IBD · From the field to the platform</title>
+<meta name="description" content="IBD (Innovation &amp; Business Development) at the Alliance of Bioversity International and CIAT builds the software CGIAR uses to report and connect its results: PRMS, CLARISA and MARLO.">
+<link rel="preload" as="image" href="/hero/fondo.webp">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+<style is:global>
+  :root{--ink:#0d2a1f;--muted:#4a6157;--green:#1f7a4d;--bg:#f6f4ee}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden}
+  .hero{position:relative;height:100svh;min-height:560px;overflow:hidden;background:#6f9a3c}
+  /* Ventana sobre la escena: ocupa toda la primera pantalla; abajo se funde con la página */
+  .view{position:absolute;inset:0;overflow:hidden;
+    -webkit-mask-image:linear-gradient(#000 90%,transparent);mask-image:linear-gradient(#000 90%,transparent)}
+  /* Escena en coordenadas reales de la imagen (2688 × 1520); JS la escala */
+  .scene{position:absolute;left:0;top:0;width:2688px;height:1520px;transform-origin:0 0;background:url(/hero/fondo.webp) 0 0/100% 100% no-repeat}
+  .crate{position:absolute;left:0;top:0;width:150px;will-change:transform,opacity;filter:drop-shadow(0 14px 10px rgba(20,40,10,.28))}
+  .machine{position:absolute;left:1066px;top:403px;z-index:500;pointer-events:none}
+  .card{position:absolute;left:0;top:0;width:92px;height:92px;border-radius:20px;background:#fff;z-index:600;will-change:transform,opacity;
+    box-shadow:0 10px 24px rgba(15,50,25,.22),0 0 0 1px rgba(255,255,255,.9) inset,0 0 26px rgba(255,236,170,.55);display:grid;place-items:center}
+  .card svg{width:56px;height:56px}
+  .glow{position:absolute;border-radius:10px;background:radial-gradient(closest-side,rgba(255,255,255,.75),rgba(255,255,255,0));z-index:450;opacity:0;pointer-events:none}
 
-      <div class="card">
-        Renderizado en el <b>servidor</b> en cada request.<br />
-        Hora del servidor: <code>{renderedAt}</code><br />
-        Runtime: <code>{runtime}</code><br />
-        <small>Refresca la página → la hora cambia = <b>SSR</b>, no prerender.</small>
-      </div>
-    </main>
-  </body>
+  /* Titular corto arriba, sobre el pasto vacío */
+  .intro{position:absolute;inset:0 0 auto;z-index:2;text-align:center;color:#fff;padding:clamp(20px,4vh,44px) 16px clamp(60px,10vh,120px);
+    background:linear-gradient(rgba(8,32,18,.62),rgba(8,32,18,.28) 60%,transparent);pointer-events:none}
+  .tag{display:inline-block;font:600 12px Inter;letter-spacing:.12em;text-transform:uppercase;color:#e8f5e4;background:#ffffff1f;border:1px solid #ffffff40;border-radius:999px;padding:6px 12px;backdrop-filter:blur(6px)}
+  .intro h1{font-size:clamp(28px,3.6vw,52px);line-height:1.04;letter-spacing:-.03em;margin:0 0 8px;font-weight:800;text-shadow:0 2px 18px rgba(0,30,10,.35)}
+  .intro p{margin:0;font-size:clamp(15px,1.15vw,18px);color:#eaf4e6;text-shadow:0 1px 10px rgba(0,30,10,.4)}
+  .intro .cta{display:inline-flex;gap:8px;margin-top:16px;pointer-events:auto}
+  .intro .cta a{font:600 14px Inter;text-decoration:none;padding:10px 16px;border-radius:999px}
+  .intro .cta .a{background:#fff;color:var(--ink)}.intro .cta .b{color:#fff;border:1px solid #ffffff66;background:#ffffff1a;backdrop-filter:blur(6px)}
+
+  /* Etiquetas por etapa: viven DENTRO de la escena (coordenadas de la imagen) → siguen a su pieza al escalar */
+  .step{position:absolute;z-index:700;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;pointer-events:none}
+  .step .pin{width:3px;background:linear-gradient(rgba(255,255,255,.95),rgba(255,255,255,.55));border-radius:2px;position:relative;
+    transform-origin:top;transform:scaleY(0);animation:pinIn .7s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--d) + .2s)}
+  .step .pin::before{content:"";position:absolute;top:-9px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:#fff;
+    box-shadow:0 0 0 7px rgba(255,255,255,.35)}
+  /* Pulso del punto: anillo que se expande, para que se note "vivo" sin molestar */
+  .step .pin::after{content:"";position:absolute;top:-9px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;
+    border:3px solid #fff;animation:ping 2.6s ease-out infinite;animation-delay:var(--d)}
+  .step .box{width:470px;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-radius:26px;padding:24px 30px;text-align:left;
+    box-shadow:0 18px 40px rgba(10,40,15,.25);color:var(--ink);pointer-events:auto;cursor:default;position:relative;overflow:hidden;
+    opacity:0;transform:translateY(40px) scale(.96);animation:boxIn .8s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--d) + .5s);
+    transition:transform .45s cubic-bezier(.2,.9,.25,1.3),box-shadow .45s,background .45s}
+  /* Brillo que barre la tarjeta al pasar el mouse */
+  .step .box::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.85) 50%,transparent 70%);
+    transform:translateX(-120%);transition:transform .9s ease;pointer-events:none}
+  .step .n{font:800 22px Inter;letter-spacing:.14em;color:var(--green);display:inline-flex;align-items:center;gap:10px}
+  .step .n::after{content:"";height:3px;width:0;background:var(--green);border-radius:2px;transition:width .45s cubic-bezier(.2,.8,.2,1)}
+  .step h3{margin:6px 0 6px;font:800 40px/1.05 Inter;letter-spacing:-.02em;transition:color .3s}
+  .step p{margin:0;font:500 27px/1.35 Inter;color:var(--muted)}
+  .step b{color:var(--ink);display:inline-block;transition:transform .35s cubic-bezier(.2,.9,.25,1.4),color .3s}
+  .step:hover{z-index:800}
+  .step:hover .box{transform:translateY(-14px) scale(1.035);background:#fff;box-shadow:0 34px 60px rgba(10,40,15,.32),0 0 0 3px rgba(31,122,77,.35)}
+  .step:hover .box::after{transform:translateX(120%)}
+  .step:hover .n::after{width:60px}
+  .step:hover h3{color:var(--green)}
+  .step:hover b{color:var(--green)}
+  .step:hover b:nth-of-type(1){transform:translateY(-4px);transition-delay:0s}
+  .step:hover b:nth-of-type(2){transform:translateY(-4px);transition-delay:.06s}
+  .step:hover b:nth-of-type(3){transform:translateY(-4px);transition-delay:.12s}
+  .step:hover .pin{background:#fff}
+  .step:hover .pin::before{background:var(--green);box-shadow:0 0 0 9px rgba(255,255,255,.7)}
+  /* La pieza de la escena que corresponde a la tarjeta se ilumina (lo maneja el JS con .hl-*) */
+  .crate,.machine{transition:filter .4s}
+  .scene.hl-1 .crate{filter:drop-shadow(0 14px 10px rgba(20,40,10,.28)) drop-shadow(0 0 22px rgba(255,240,170,.95)) brightness(1.08)}
+  .scene.hl-2 .machine{filter:drop-shadow(0 0 40px rgba(255,236,160,.95)) brightness(1.04)}
+  @keyframes pinIn{to{transform:scaleY(1)}}
+  @keyframes boxIn{to{opacity:1;transform:none}}
+  @keyframes ping{0%{transform:scale(1);opacity:.9}70%,100%{transform:scale(3.2);opacity:0}}
+  @media (prefers-reduced-motion:reduce){.step .pin,.step .box{animation:none;opacity:1;transform:none}.step .pin::after{animation:none;opacity:0}}
+
+  /* Móvil: la escena se vuelve un recorte de la acción y las etapas bajan como lista */
+  .steps-m{display:none}
+  @media (max-width:760px){
+    .hero{height:auto;min-height:0;background:var(--bg);display:flex;flex-direction:column}
+    .intro{position:relative;order:-1;background:#0f3a24;padding-bottom:28px}
+    .view{position:relative;inset:auto;aspect-ratio:2600/1106;-webkit-mask-image:none;mask-image:none}
+    .step{display:none}
+    .steps-m{display:grid;gap:10px;padding:18px 16px 28px;list-style:none;margin:0}
+    .steps-m li{background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 6px 18px rgba(10,40,15,.08)}
+    .steps-m b{display:block;font-size:17px;margin-bottom:2px}.steps-m span{color:var(--muted);font-size:15px}
+    .steps-m em{font-style:normal;font-weight:800;color:var(--green);letter-spacing:.12em;font-size:12px}
+  }
+  @media (prefers-reduced-motion:reduce){.crate,.card{transition:none}}
+</style>
+</head>
+<body>
+<section class="hero">
+  <div class="view" id="view">
+    <div class="scene" id="scene">
+      <img class="machine" src="/hero/maquina.webp" alt="">
+      <!-- Etapas: x/y = punto de la pieza (coordenadas de la imagen); el alto del pin baja la tarjeta al pasto libre -->
+      <div class="step" data-stage="1" style="left:640px;top:985px;--d:0.00s"><span class="pin" style="height:150px"></span><div class="box"><div class="n">01 · FIELD</div><h3>Data born in the field</h3><p>Crops, water, soils and reports from research centers.</p></div></div>
+      <div class="step" data-stage="2" style="left:1380px;top:945px;--d:0.25s"><span class="pin" style="height:120px"></span><div class="box"><div class="n">02 · SOFTWARE</div><h3>We process and validate it</h3><p>Our software organizes, checks and connects every data point.</p></div></div>
+      <div class="step" data-stage="3" style="left:2250px;top:985px;--d:0.50s"><span class="pin" style="height:120px"></span><div class="box"><div class="n">03 · PLATFORMS</div><h3>It reaches where it is used</h3><p><b>PRMS</b>, <b>CLARISA</b> and <b>MARLO</b>, on any screen.</p></div></div>
+    </div>
+  </div>
+  <div class="intro">
+    <h1>From the field to the platform</h1>
+    <p>How we turn CGIAR research into information people actually use.</p>
+    <div class="cta"><a class="a" href="#">See our platforms</a><a class="b" href="#">How we work</a></div>
+  </div>
+  <ol class="steps-m">
+    <li><em>01 · FIELD</em><b>Data born in the field</b><span>Crops, water, soils and reports from research centers.</span></li>
+    <li><em>02 · SOFTWARE</em><b>We process and validate it</b><span>Our software organizes, checks and connects every data point.</span></li>
+    <li><em>03 · PLATFORMS</em><b>It reaches where it is used</b><span>PRMS, CLARISA and MARLO, on any screen.</span></li>
+  </ol>
+</section>
+<AiReviewSection />
+<script is:inline>
+(() => {
+  const scene = document.getElementById('scene'), view = document.getElementById('view');
+  // Recorte de la escena a mostrar (coordenadas de la imagen): de la banda a los dispositivos
+  const FULL = {x: 0, y: 0, w: 2688, h: 1520}, ACTION = {x: 60, y: 300, w: 2600, h: 1106};
+  function fit() {
+    const CROP = innerWidth <= 760 ? ACTION : FULL;
+    const k = Math.max(view.clientWidth / CROP.w, view.clientHeight / CROP.h);
+    const ox = (view.clientWidth - CROP.w * k) / 2 - CROP.x * k;
+    const oy = (view.clientHeight - CROP.h * k) / 2 - CROP.y * k;
+    scene.style.transform = `translate(${ox}px,${oy}px) scale(${k})`;
+  }
+  addEventListener('resize', fit); fit();
+
+  // ---- Cajas sobre la banda: recorren la línea central y entran a la máquina ----
+  const BELT = {x0: 300, y0: 992, x1: 1325, y1: 725};   // centro de la banda: de la punta izquierda hasta adentro de la máquina
+  const CRATE_PERIOD = 16200;                             // ms que tarda una caja en recorrer la banda
+  // 3 cajas a la vez en la banda (con aire entre ellas); cada vez que una entra a la máquina,
+  // reaparece en la punta con el siguiente de los 5 contenidos → salen los 5 y nunca hay corte.
+  const SLOTS = 4, KINDS = 5;
+  const crates = Array.from({length: SLOTS}, (_, i) => {
+    const img = new Image(); img.className = 'crate'; scene.appendChild(img);
+    return {img, phase: i / SLOTS, lastLap: null};
+  });
+  const srcs = [1,2,3,4,5].map(n => { const im = new Image(); im.src = `/hero/caja${n}.webp`; return im; });
+
+  // ---- Tarjetas: salen por la salida trasera y viajan en arco a cada dispositivo ----
+  const EXIT = {x: 1505, y: 610};
+  const DEVICES = [ {x: 2180, y: 690, w: 70, h: 150}, {x: 2305, y: 640, w: 150, h: 190}, {x: 2490, y: 590, w: 200, h: 130} ];
+  const icons = [
+    '<svg viewBox="0 0 24 24"><path d="M5 19c8 0 14-6 14-14C11 5 5 11 5 19Zm0 0 8-8" fill="#cfe9d4" stroke="#1f7a4d" stroke-width="1.6" stroke-linecap="round"/></svg>',
+    '<svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z" fill="#d7ecf5" stroke="#2f7f9e" stroke-width="1.6"/></svg>',
+    '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" fill="#e3f1d9" stroke="#1f7a4d" stroke-width="1.4"/><path d="M4 12h16M12 4v16M4 8l8 4M12 20l8-6" stroke="#1f7a4d" stroke-width="1" fill="none"/></svg>',
+    '<svg viewBox="0 0 24 24"><path d="M5 19V13M10 19V9M15 19v-6M20 19V5" stroke="#1f7a4d" stroke-width="2.4" stroke-linecap="round"/></svg>'
+  ];
+  const CARD_PERIOD = 2800;   // ms de viaje de cada tarjeta
+  const N_CARDS = 3;          // una por dispositivo, escalonadas
+  const cards = Array.from({length: N_CARDS}, (_, i) => {
+    const el = document.createElement('div'); el.className = 'card'; scene.appendChild(el);
+    return {el, phase: i / N_CARDS, lastLap: -1};
+  });
+  const glows = DEVICES.map(d => {
+    const g = document.createElement('div'); g.className = 'glow';
+    Object.assign(g.style, {left: d.x - d.w / 2 + 'px', top: d.y - d.h / 2 + 'px', width: d.w + 'px', height: d.h + 'px'});
+    scene.appendChild(g); return g;
+  });
+
+  // Hover en una etapa → se ilumina su pieza de la escena (cajas, máquina o pantallas)
+  let hot = 0;
+  scene.querySelectorAll('.step').forEach(st => {
+    st.addEventListener('mouseenter', () => { hot = +st.dataset.stage; scene.classList.add('hl-' + hot); });
+    st.addEventListener('mouseleave', () => { scene.classList.remove('hl-' + hot); hot = 0; });
+  });
+
+  const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  const bez = (a, c, b, t) => (1 - t) * (1 - t) * a + 2 * (1 - t) * t * c + t * t * b;
+
+  function frame(now) {
+    // Cajas: posición = fase + tiempo, módulo 1 → bucle exacto, sin principio ni fin
+    for (const c of crates) {
+      const raw = now / CRATE_PERIOD + c.phase, lap = Math.floor(raw), u = raw - lap;
+      if (lap !== c.lastLap) { const k = ((lap * SLOTS + crates.indexOf(c)) % KINDS + KINDS) % KINDS; c.img.src = srcs[k].src; c.img.dataset.h = srcs[k].naturalHeight || 250; c.lastLap = lap; }
+      const x = BELT.x0 + (BELT.x1 - BELT.x0) * u, y = BELT.y0 + (BELT.y1 - BELT.y0) * u;
+      const op = Math.min(1, u / 0.06, (1 - u) / 0.04);    // aparece suave en la punta; se apaga ya adentro de la máquina
+      const h = (c.img.naturalHeight || +c.img.dataset.h) * 150 / 240;
+      c.img.style.transform = `translate(${x - 75}px,${y - h + 34}px)`;
+      c.img.style.opacity = op;
+      c.img.style.zIndex = Math.round(400 - u * 300);     // las de adelante (izquierda) tapan a las de atrás
+    }
+    // Tarjetas: cada vuelta va a un dispositivo distinto, en orden fijo → siempre el mismo ciclo
+    const glowAmt = DEVICES.map(() => 0);
+    for (const [i, c] of cards.entries()) {
+      const raw = now / CARD_PERIOD + c.phase, lap = Math.floor(raw), t = raw - lap;
+      const di = (lap + i) % DEVICES.length, d = DEVICES[di];
+      if (lap !== c.lastLap) { c.el.innerHTML = icons[(lap + i) % icons.length]; c.lastLap = lap; }
+      const e = ease(t);
+      const cx = (EXIT.x + d.x) / 2, cy = Math.min(EXIT.y, d.y) - 260;
+      const x = bez(EXIT.x, cx, d.x, e), y = bez(EXIT.y, cy, d.y, e);
+      const s = t < .12 ? .4 + 5 * t : (t > .82 ? 1 - (t - .82) * 4.4 : 1);
+      const op = t < .1 ? t / .1 : (t > .86 ? Math.max(0, 1 - (t - .86) / .14) : 1);
+      c.el.style.transform = `translate(${x - 46}px,${y - 46}px) scale(${Math.max(.2, s)})`;
+      c.el.style.opacity = op;
+      if (t > .84) glowAmt[di] = Math.max(glowAmt[di], Math.sin((t - .84) / .16 * Math.PI) * .9);
+    }
+    glows.forEach((g, k) => g.style.opacity = hot === 3 ? Math.max(glowAmt[k], .55 + .25 * Math.sin(now / 260 + k)) : glowAmt[k]);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
 </html>
